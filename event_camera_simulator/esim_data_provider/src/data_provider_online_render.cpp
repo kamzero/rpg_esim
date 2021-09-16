@@ -205,7 +205,20 @@ void DataProviderOnlineMoving3DCameraRig::sampleFrame()
       // flow (for example, the OpenGL renderer which implements
       // optic flow computation efficiently using a shader), use that.
       // otherwise, compute the optic flow ourselves using the renderer depthmap
-      if(renderers_[i]->canComputeOpticFlow())
+
+      if(renderers_[i]->canComputeBBox() && renderers_[i]->canComputeOpticFlow())
+      {
+        renderers_[i]->renderWithBBox(sim_data_.groundtruth.T_W_B * camera_rig_->T_B_C(i),
+                              sim_data_.groundtruth.linear_velocities_[i],
+                              sim_data_.groundtruth.angular_velocities_[i],
+                              sim_data_.groundtruth.T_W_OBJ_,
+                              sim_data_.groundtruth.linear_velocity_obj_,
+                              sim_data_.groundtruth.angular_velocity_obj_,
+                              sim_data_.images[i],
+                              sim_data_.depthmaps[i],
+                              sim_data_.optic_flows[i], sim_data_.bboxes[i]);
+      }
+      else if(!renderers_[i]->canComputeBBox() && renderers_[i]->canComputeOpticFlow())
       {
         renderers_[i]->renderWithFlow(sim_data_.groundtruth.T_W_B * camera_rig_->T_B_C(i),
                               sim_data_.groundtruth.linear_velocities_[i],
@@ -217,8 +230,7 @@ void DataProviderOnlineMoving3DCameraRig::sampleFrame()
                               sim_data_.depthmaps[i],
                               sim_data_.optic_flows[i]);
       }
-      else
-      {
+      else{
         renderers_[i]->render(sim_data_.groundtruth.T_W_B * camera_rig_->T_B_C(i),
                               sim_data_.groundtruth.T_W_OBJ_,
                               sim_data_.images[i],

@@ -21,6 +21,7 @@ using Translation = ze::Position;
 using Vector3 = ze::Vector3;
 using Vector4 = ze::Vector4;
 using Vector3i = Eigen::Vector3i;
+using BBox = ze::Vector4;
 
 using Transformation = ze::Transformation;
 using TransformationVector = ze::TransformationVector;
@@ -110,6 +111,9 @@ struct SimulatorData
 
   //! Optic flow maps.
   OpticFlowPtrVector optic_flows;
+
+  //! Bounding Box of Objects
+  std::vector<std::vector<BBox>> bboxes;
 
   //! Camera
   ze::CameraRig::Ptr camera_rig;

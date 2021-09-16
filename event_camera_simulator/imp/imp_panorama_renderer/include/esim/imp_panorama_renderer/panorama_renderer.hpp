@@ -26,6 +26,9 @@ public:
   //! Returns true if the rendering engine can compute optic flow, false otherwise
   virtual bool canComputeOpticFlow() const override { return false; }
 
+  //! Returns true if the rendering engine can generate bounding box of objects
+  virtual bool canComputeBBox() const override { return false; }
+
   virtual void setCamera(const ze::Camera::Ptr& camera) override;
 
 protected:

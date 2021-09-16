@@ -323,6 +323,121 @@ void OpenGLRenderer::render(const Transformation& T_W_C,
   linear_depth.copyTo(*out_depthmap);
 }
 
+void OpenGLRenderer::renderWithBBox(const Transformation& T_W_C,
+                                    const LinearVelocity& v_WC,
+                                    const AngularVelocity& w_WC,
+                                    const std::vector<Transformation>& T_W_OBJ,
+                                    const std::vector<LinearVelocity>& linear_velocity_obj,
+                                    const std::vector<AngularVelocity>& angular_velocity_obj,
+                                    const ImagePtr& out_image,
+                                    const DepthmapPtr& out_depthmap,
+                                    const OpticFlowPtr& optic_flow_map, std::vector<BBox>& out_bbox) const
+{
+  CHECK(is_initialized_) << "Called render() but the renderer was not initialized yet. Have you first called setCamera()?";
+  CHECK(out_image);
+  CHECK(out_depthmap);
+  CHECK_EQ(out_image->cols, width_);
+  CHECK_EQ(out_image->rows, height_);
+  CHECK_EQ(out_depthmap->cols, width_);
+  CHECK_EQ(out_depthmap->rows, height_);
+  CHECK_EQ(out_image->type(), CV_32F);
+  CHECK_EQ(out_depthmap->type(), CV_32F);
+
+  // draw to our framebuffer instead of screen
+  glBindFramebuffer(GL_FRAMEBUFFER, multisampled_fbo);
+
+  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  shader->use();
+
+  glm::mat4 model = glm::mat4(1.0f);
+
+  ze::Matrix4 T_C_W = T_W_C.inverse().getTransformationMatrix();
+  // We invert the Z axis here because NDC coordinates
+  // are left-handed by default in OpenGL
+  // (see https://stackoverflow.com/a/12336360)
+  T_C_W.block<1,4>(2,0) *= -1.0;
+
+  // view = transformation from point in world to point in camera
+  glm::mat4 view =
+      glm::make_mat4(T_C_W.data());
+
+  ze::Matrix4 frustum;
+  ze::VectorX intrinsics = camera_->projectionParameters();
+  const double fx = intrinsics(0);
+  const double fy = intrinsics(1);
+  const double cx = intrinsics(2);
+  const double cy = intrinsics(3);
+  build_opengl_projection_for_intrinsics(frustum, fx, fy, cx, cy, width_, height_, zmin, zmax);
+  glm::mat4 projection = glm::make_mat4(frustum.data());
+
+  unsigned int modelLoc = glGetUniformLocation(shader->ID, "model");
+  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+  unsigned int viewLoc = glGetUniformLocation(shader->ID, "view");
+  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+  unsigned int projectionLoc = glGetUniformLocation(shader->ID, "projection");
+  glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection)); // TODO outside of main loop
+
+  our_model->Draw(*shader);
+
+  // draw dynamic objects
+  for (size_t i = 0; i < dynamic_objects_model.size(); i++)
+  {
+      ze::Matrix4 T_W_OBJ_OPENGL = T_W_OBJ[i].getTransformationMatrix();
+      model = glm::make_mat4(T_W_OBJ_OPENGL.data());
+
+      shader->setMat4("model", model);
+      dynamic_objects_model[i]->Draw(*shader);
+  }
+
+  // now resolve multisampled buffer into the normal fbo
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampled_fbo);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
+  glBlitFramebuffer(0, 0, width_, height_, 0, 0, width_, height_, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+  // bind fbo back so that we read from it
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+  // read out what we just rendered
+  cv::Mat img_color(height_, width_, CV_8UC3);
+  glPixelStorei(GL_PACK_ALIGNMENT, (img_color.step & 3)?1:4);
+  glPixelStorei(GL_PACK_ROW_LENGTH, img_color.step/img_color.elemSize());
+
+  glReadPixels(0, 0, img_color.cols, img_color.rows, GL_BGR, GL_UNSIGNED_BYTE, img_color.data);
+
+  GLenum err = glGetError();
+  if (err) {
+    printf("something went wrong while reading pixels: %x\n", err);
+    return;
+  }
+
+  // read out depth data
+  cv::Mat img_depth(height_, width_, CV_32FC1);
+  glPixelStorei(GL_PACK_ALIGNMENT, (img_depth.step & 3)?1:4);
+  glPixelStorei(GL_PACK_ROW_LENGTH, img_depth.step/img_depth.elemSize());
+
+  glReadPixels(0, 0, img_depth.cols, img_depth.rows, GL_DEPTH_COMPONENT, GL_FLOAT, img_depth.data);
+
+  err = glGetError();
+  if (err) {
+    printf("something went wrong while reading depth data: %x\n", err);
+    return;
+  }
+
+  // convert inverse depth buffer to linear depth between zmin and zmax
+  // see the "Learn OpenGL book, page 177
+  cv::Mat linear_depth = (2.0 * zmin * zmax) / (zmax + zmin - (2 * img_depth - 1.f) * (zmax - zmin));
+
+  cv::Mat img_grayscale;
+  cv::cvtColor(img_color, img_grayscale, cv::COLOR_BGR2GRAY);
+  img_grayscale.convertTo(*out_image, CV_32F, 1.f/255.f);
+
+  linear_depth.copyTo(*out_depthmap);
+}
+
 
 void OpenGLRenderer::renderWithFlow(const Transformation& T_W_C,
                                     const LinearVelocity& v_WC,

@@ -20,9 +20,22 @@ public:
                       const ImagePtr& out_image,
                       const DepthmapPtr& out_depthmap) const = 0;
 
-
   //! Returns true if the rendering engine can compute optic flow, false otherwise
   virtual bool canComputeOpticFlow() const = 0;
+
+  //! Returns true if the rendering engine can generate bounding box of objects
+  virtual bool canComputeBBox() const = 0;
+
+  //! Render an image at a given pose and generate bounding box of objects.
+  virtual void renderWithBBox(const Transformation& T_W_C,
+                      const LinearVelocity& v_WC,
+                      const AngularVelocity& w_WC,
+                      const std::vector<Transformation>& T_W_OBJ,
+                      const std::vector<LinearVelocity>& linear_velocity_obj,
+                      const std::vector<AngularVelocity>& angular_velocity_obj,
+                      const ImagePtr& out_image,
+                      const DepthmapPtr& out_depthmap,
+                      const OpticFlowPtr& optic_flow_map,  std::vector<BBox>& out_bbox) const {};
 
   //! Render an image + depth map + optic flow map at a given pose,
   //! given the camera linear and angular velocity
