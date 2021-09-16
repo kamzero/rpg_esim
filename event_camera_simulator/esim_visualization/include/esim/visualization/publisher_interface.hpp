@@ -14,6 +14,7 @@ public:
   virtual ~Publisher() = default;
 
   virtual void imageCallback(const ImagePtrVector& images, Time t) {}
+  virtual void bboxCallback(const std::vector<BBox>& bboxes, Time t) {}
   virtual void imageCorruptedCallback(const ImagePtrVector& corrupted_images, Time t) {}
   virtual void depthmapCallback(const DepthmapPtrVector& depthmaps, Time t) {}
   virtual void opticFlowCallback(const OpticFlowPtrVector& optic_flows, Time t) {}

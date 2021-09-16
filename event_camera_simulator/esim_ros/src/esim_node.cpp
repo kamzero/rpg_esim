@@ -5,6 +5,7 @@
 #include <esim/visualization/synthetic_optic_flow_publisher.hpp>
 #include <esim/data_provider/data_provider_factory.hpp>
 #include <esim/visualization/text_file_publisher.hpp>
+#include <esim/visualization/bbox_file_publisher.hpp>
 #include <esim/visualization/image_publisher.hpp>
 
 #include <glog/logging.h>
@@ -78,6 +79,10 @@ int main(int argc, char** argv)
 
   Publisher::Ptr my_publisher = TextFilePublisher::createFromGflags(data_provider_->numCameras());
   if(my_publisher) sim->addPublisher(my_publisher);
+
+  Publisher::Ptr bbox_publisher = BBoxFilePublisher::createFromGflags(data_provider_->numCameras());
+  if(bbox_publisher) sim->addPublisher(bbox_publisher);
+
 //   Publisher::Ptr image_publisher = ImagePublisher::createFromGflags(data_provider_->numCameras());
 //   if(image_publisher) sim->addPublisher(image_publisher);
 

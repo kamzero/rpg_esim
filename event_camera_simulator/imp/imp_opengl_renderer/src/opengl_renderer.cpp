@@ -405,7 +405,6 @@ void OpenGLRenderer::calcBBox(const Transformation& T_W_C,
   std::vector<std::vector<cv::Point> > contours;
 	std::vector<cv::Vec4i> hierarchy;
 
-
 	cv::threshold(img_grayscale, threshold_output, 128, 255, cv::THRESH_BINARY);
   cv::findContours(threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
@@ -427,7 +426,11 @@ void OpenGLRenderer::calcBBox(const Transformation& T_W_C,
   //   std::cout << boundRect[i].tl() << " & " << boundRect[i].br() << std::endl;
   // }
 
-  out_bbox = boundRect[contours.size()-1]
+  if(contours.size() > 1)
+    out_bbox = boundRect[contours.size()-1];
+  else
+    out_bbox = cv::Rect();
+
   // cv::imwrite("/tmp/2.jpg", img_grayscale);
 }
 

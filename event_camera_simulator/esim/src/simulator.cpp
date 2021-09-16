@@ -108,6 +108,7 @@ void Simulator::publishData(const SimulatorData& sim_data,
     for(const Publisher::Ptr& publisher : publishers_)
     {
       publisher->imageCallback(sim_data.images, time);
+      publisher->bboxCallback(sim_data.bboxes, time);
 
       if(camera_simulator_success && time >= exposure_time_)
       {

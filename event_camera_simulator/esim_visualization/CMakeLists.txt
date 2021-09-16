@@ -23,6 +23,7 @@ set(HEADERS
     include/esim/visualization/adaptive_sampling_benchmark_publisher.hpp
     include/esim/visualization/synthetic_optic_flow_publisher.hpp
     include/esim/visualization/text_file_publisher.hpp
+    include/esim/visualization/bbox_file_publisher.hpp
     include/esim/visualization/image_publisher.hpp
 )
 
@@ -33,6 +34,7 @@ set(SOURCES
     src/adaptive_sampling_benchmark_publisher.cpp
     src/synthetic_optic_flow_publisher.cpp
     src/text_file_publisher.cpp
+    src/bbox_file_publisher.cpp
     src/image_publisher.cpp
 )
 
