@@ -15,6 +15,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 namespace event_camera_simulator {
+cv::RNG rng(12345);
 
 DEFINE_string(renderer_scene, "",
               "Path to scene file (.obj) which will be used as simulation environment");
@@ -323,30 +324,17 @@ void OpenGLRenderer::render(const Transformation& T_W_C,
   linear_depth.copyTo(*out_depthmap);
 }
 
-void OpenGLRenderer::renderWithBBox(const Transformation& T_W_C,
-                                    const LinearVelocity& v_WC,
-                                    const AngularVelocity& w_WC,
+void OpenGLRenderer::calcBBox(const Transformation& T_W_C,
                                     const std::vector<Transformation>& T_W_OBJ,
-                                    const std::vector<LinearVelocity>& linear_velocity_obj,
-                                    const std::vector<AngularVelocity>& angular_velocity_obj,
-                                    const ImagePtr& out_image,
-                                    const DepthmapPtr& out_depthmap,
-                                    const OpticFlowPtr& optic_flow_map, std::vector<BBox>& out_bbox) const
+                                    BBox& out_bbox) const
 {
   CHECK(is_initialized_) << "Called render() but the renderer was not initialized yet. Have you first called setCamera()?";
-  CHECK(out_image);
-  CHECK(out_depthmap);
-  CHECK_EQ(out_image->cols, width_);
-  CHECK_EQ(out_image->rows, height_);
-  CHECK_EQ(out_depthmap->cols, width_);
-  CHECK_EQ(out_depthmap->rows, height_);
-  CHECK_EQ(out_image->type(), CV_32F);
-  CHECK_EQ(out_depthmap->type(), CV_32F);
 
   // draw to our framebuffer instead of screen
   glBindFramebuffer(GL_FRAMEBUFFER, multisampled_fbo);
 
-  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+  // important for distinguish moving object and background
+  glClearColor(0.5f, 0.6f, 0.6f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   shader->use();
@@ -381,8 +369,6 @@ void OpenGLRenderer::renderWithBBox(const Transformation& T_W_C,
   unsigned int projectionLoc = glGetUniformLocation(shader->ID, "projection");
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection)); // TODO outside of main loop
 
-  our_model->Draw(*shader);
-
   // draw dynamic objects
   for (size_t i = 0; i < dynamic_objects_model.size(); i++)
   {
@@ -414,28 +400,35 @@ void OpenGLRenderer::renderWithBBox(const Transformation& T_W_C,
     return;
   }
 
-  // read out depth data
-  cv::Mat img_depth(height_, width_, CV_32FC1);
-  glPixelStorei(GL_PACK_ALIGNMENT, (img_depth.step & 3)?1:4);
-  glPixelStorei(GL_PACK_ROW_LENGTH, img_depth.step/img_depth.elemSize());
+  cv::Mat img_grayscale, threshold_output;
+  cv::cvtColor(img_color, img_grayscale, cv::COLOR_BGR2GRAY);
+  std::vector<std::vector<cv::Point> > contours;
+	std::vector<cv::Vec4i> hierarchy;
 
-  glReadPixels(0, 0, img_depth.cols, img_depth.rows, GL_DEPTH_COMPONENT, GL_FLOAT, img_depth.data);
 
-  err = glGetError();
-  if (err) {
-    printf("something went wrong while reading depth data: %x\n", err);
-    return;
+	cv::threshold(img_grayscale, threshold_output, 128, 255, cv::THRESH_BINARY);
+  cv::findContours(threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+
+  // std::cout << "contours size: " << contours.size() << std::endl;
+  std::vector<std::vector<cv::Point> > contours_poly(contours.size());
+  std::vector<cv::Rect> boundRect(contours.size());
+
+  for (int i = 0; i < contours.size(); i++)
+  {
+    cv::approxPolyDP(cv::Mat(contours[i]), contours_poly[i], 3, true);
+    boundRect[i] = cv::boundingRect(cv::Mat(contours_poly[i]));
   }
 
-  // convert inverse depth buffer to linear depth between zmin and zmax
-  // see the "Learn OpenGL book, page 177
-  cv::Mat linear_depth = (2.0 * zmin * zmax) / (zmax + zmin - (2 * img_depth - 1.f) * (zmax - zmin));
+	// /// draw bounding boxes 
+	// for (int i = 0; i< contours.size(); i++)
+	// {
+  //   cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+	// 	cv::rectangle(img_grayscale, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0);
+  //   std::cout << boundRect[i].tl() << " & " << boundRect[i].br() << std::endl;
+  // }
 
-  cv::Mat img_grayscale;
-  cv::cvtColor(img_color, img_grayscale, cv::COLOR_BGR2GRAY);
-  img_grayscale.convertTo(*out_image, CV_32F, 1.f/255.f);
-
-  linear_depth.copyTo(*out_depthmap);
+  out_bbox = boundRect[contours.size()-1]
+  // cv::imwrite("/tmp/2.jpg", img_grayscale);
 }
 
 

@@ -27,15 +27,9 @@ public:
   virtual bool canComputeBBox() const = 0;
 
   //! Render an image at a given pose and generate bounding box of objects.
-  virtual void renderWithBBox(const Transformation& T_W_C,
-                      const LinearVelocity& v_WC,
-                      const AngularVelocity& w_WC,
+  virtual void calcBBox(const Transformation& T_W_C,
                       const std::vector<Transformation>& T_W_OBJ,
-                      const std::vector<LinearVelocity>& linear_velocity_obj,
-                      const std::vector<AngularVelocity>& angular_velocity_obj,
-                      const ImagePtr& out_image,
-                      const DepthmapPtr& out_depthmap,
-                      const OpticFlowPtr& optic_flow_map,  std::vector<BBox>& out_bbox) const {};
+                      BBox& out_bbox) const {};
 
   //! Render an image + depth map + optic flow map at a given pose,
   //! given the camera linear and angular velocity
