@@ -324,9 +324,8 @@ void OpenGLRenderer::render(const Transformation& T_W_C,
   linear_depth.copyTo(*out_depthmap);
 }
 
-void OpenGLRenderer::calcBBox(const Transformation& T_W_C,
-                                    const std::vector<Transformation>& T_W_OBJ,
-                                    BBox& out_bbox) const
+cv::Rect OpenGLRenderer::calcBBox(const Transformation& T_W_C,
+                                    const std::vector<Transformation>& T_W_OBJ) const
 {
   CHECK(is_initialized_) << "Called render() but the renderer was not initialized yet. Have you first called setCamera()?";
 
@@ -397,7 +396,7 @@ void OpenGLRenderer::calcBBox(const Transformation& T_W_C,
   GLenum err = glGetError();
   if (err) {
     printf("something went wrong while reading pixels: %x\n", err);
-    return;
+    return cv::Rect(0,0,0,0);
   }
 
   cv::Mat img_grayscale, threshold_output;
@@ -427,9 +426,9 @@ void OpenGLRenderer::calcBBox(const Transformation& T_W_C,
   // }
 
   if(contours.size() > 1)
-    out_bbox = boundRect[contours.size()-1];
+    return boundRect[contours.size()-1];
   else
-    out_bbox = cv::Rect();
+    return cv::Rect(0,0,0,0);
 
   // cv::imwrite("/tmp/2.jpg", img_grayscale);
 }

@@ -113,7 +113,7 @@ struct SimulatorData
   OpticFlowPtrVector optic_flows;
 
   //! Bounding Box of Objects
-  std::vector<BBox> bboxes;
+  std::vector<cv::Rect> bboxes;
 
   //! Camera
   ze::CameraRig::Ptr camera_rig;

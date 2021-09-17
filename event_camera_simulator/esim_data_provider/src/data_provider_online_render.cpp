@@ -218,11 +218,15 @@ void DataProviderOnlineMoving3DCameraRig::sampleFrame()
                       sim_data_.depthmaps[i],
                       sim_data_.optic_flows[i]);
 
-        renderers_[i]->calcBBox(sim_data_.groundtruth.T_W_B * camera_rig_->T_B_C(i),
-                              sim_data_.groundtruth.T_W_OBJ_,
-                              sim_data_.bboxes[i]);
+        if(sim_data_.bboxes.size() == 0)
+          sim_data_.bboxes.push_back(renderers_[i]->calcBBox(sim_data_.groundtruth.T_W_B * camera_rig_->T_B_C(i),
+                              sim_data_.groundtruth.T_W_OBJ_));
+        else
+          sim_data_.bboxes[0] = renderers_[i]->calcBBox(sim_data_.groundtruth.T_W_B * camera_rig_->T_B_C(i),
+                              sim_data_.groundtruth.T_W_OBJ_);
       }
       else if(!renderers_[i]->canComputeBBox() && renderers_[i]->canComputeOpticFlow())
+      // if( renderers_[i]->canComputeOpticFlow())
       {
         renderers_[i]->renderWithFlow(sim_data_.groundtruth.T_W_B * camera_rig_->T_B_C(i),
                               sim_data_.groundtruth.linear_velocities_[i],

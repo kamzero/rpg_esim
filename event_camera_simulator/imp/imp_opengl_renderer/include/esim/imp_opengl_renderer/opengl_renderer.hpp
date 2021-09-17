@@ -33,9 +33,8 @@ public:
   virtual bool canComputeBBox() const override { return true; }
 
   //! Render an image at a given pose and generate bounding box of objects.
-  virtual void calcBBox(const Transformation& T_W_C,
-                      const std::vector<Transformation>& T_W_OBJ,
-                      BBox& out_bbox) const override;
+  virtual cv::Rect calcBBox(const Transformation& T_W_C,
+                      const std::vector<Transformation>& T_W_OBJ) const override;
       
   //! Render an image + depth map + optic flow map at a given pose,
   //! given the camera linear and angular velocity

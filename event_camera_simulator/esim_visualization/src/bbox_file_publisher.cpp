@@ -35,7 +35,11 @@ Publisher::Ptr BBoxFilePublisher::createFromGflags(size_t num_cameras)
 
 void BBoxFilePublisher::bboxCallback(const std::vector<BBox>& bboxes, Time t)
 {
-    CHECK_EQ(bboxes.size(), 1);
+    // CHECK_EQ(bboxes.size(), 1);
+    if(bboxes.size() != 1){
+      std::cout << "bboxes size is " << bboxes.size() << std::endl;
+      return; 
+    }
     bboxes_text_file_ << std::to_string(t) << " " << bboxes[0] << std::endl;
 }
 
