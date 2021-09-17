@@ -40,8 +40,8 @@ void BBoxFilePublisher::bboxCallback(const std::vector<BBox>& bboxes, Time t)
       std::cout << "bboxes size is " << bboxes.size() << std::endl;
       return; 
     }
-    bboxes_text_file_ << std::to_string(t) << " " << bboxes[0].x <<  bboxes[0].y 
-      << bboxes[0].width << bboxes[0].height << std::endl;
+    bboxes_text_file_ << std::to_string(t) << " " << bboxes[0].x  << " " <<  bboxes[0].y  << " " 
+      << bboxes[0].width  << " " << bboxes[0].height << std::endl;
 }
 
 
