@@ -217,6 +217,8 @@ void DataProviderOnlineMoving3DCameraRig::sampleFrame()
                       sim_data_.images[i],
                       sim_data_.depthmaps[i],
                       sim_data_.optic_flows[i]);
+        
+        cv::Size size = sim_data_.images[i]->size();
 
         if(sim_data_.bboxes.size() == 0)
           sim_data_.bboxes.push_back(renderers_[i]->calcBBox(sim_data_.groundtruth.T_W_B * camera_rig_->T_B_C(i),
@@ -224,6 +226,11 @@ void DataProviderOnlineMoving3DCameraRig::sampleFrame()
         else
           sim_data_.bboxes[0] = renderers_[i]->calcBBox(sim_data_.groundtruth.T_W_B * camera_rig_->T_B_C(i),
                               sim_data_.groundtruth.T_W_OBJ_);
+
+        sim_data_.bboxes[0].x = MAX(0, sim_data_.bboxes[0].x - 3);
+        sim_data_.bboxes[0].y = MAX(0, sim_data_.bboxes[0].y - 3);
+        sim_data_.bboxes[0].width = MIN(size.width, sim_data_.bboxes[0].width + 6);
+        sim_data_.bboxes[0].height = MAX(size.height, sim_data_.bboxes[0].height + 6);
       }
       else if(!renderers_[i]->canComputeBBox() && renderers_[i]->canComputeOpticFlow())
       // if( renderers_[i]->canComputeOpticFlow())
