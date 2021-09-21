@@ -11,7 +11,7 @@ cameras:
     intrinsics:
       cols: 1
       rows: 4
-      data: [200.0, 200.0, 120.0, 90.0]
+      data: [333, 375, 120.0, 90.0]
     distortion:
       type: none
       parameters:

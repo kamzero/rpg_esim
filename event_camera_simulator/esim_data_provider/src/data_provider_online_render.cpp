@@ -230,7 +230,7 @@ void DataProviderOnlineMoving3DCameraRig::sampleFrame()
         sim_data_.bboxes[0].x = MAX(0, sim_data_.bboxes[0].x - 3);
         sim_data_.bboxes[0].y = MAX(0, sim_data_.bboxes[0].y - 3);
         sim_data_.bboxes[0].width = MIN(size.width, sim_data_.bboxes[0].width + 6);
-        sim_data_.bboxes[0].height = MAX(size.height, sim_data_.bboxes[0].height + 6);
+        sim_data_.bboxes[0].height = MIN(size.height, sim_data_.bboxes[0].height + 6);
       }
       else if(!renderers_[i]->canComputeBBox() && renderers_[i]->canComputeOpticFlow())
       // if( renderers_[i]->canComputeOpticFlow())

@@ -417,20 +417,21 @@ cv::Rect OpenGLRenderer::calcBBox(const Transformation& T_W_C,
     boundRect[i] = cv::boundingRect(cv::Mat(contours_poly[i]));
   }
 
-	// /// draw bounding boxes 
-	// for (int i = 0; i< contours.size(); i++)
-	// {
-  //   cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
-	// 	cv::rectangle(img_grayscale, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0);
-  //   std::cout << boundRect[i].tl() << " & " << boundRect[i].br() << std::endl;
-  // }
+	/// draw bounding boxes 
+	for (int i = 0; i< contours.size(); i++)
+	{
+    cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+		cv::rectangle(img_grayscale, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0);
+    std::cout << boundRect[i].x << " & " << boundRect[i].y <<" & " << boundRect[i].width 
+      << " & " << boundRect[i].height << std::endl;
+  }
 
   if(contours.size() > 1)
-    return boundRect[contours.size()-1];
+    return boundRect[1];
   else
     return cv::Rect(0,0,0,0);
 
-  // cv::imwrite("/tmp/2.jpg", img_grayscale);
+  cv::imwrite("/tmp/2.jpg", img_grayscale);
 }
 
 

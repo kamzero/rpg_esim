@@ -164,7 +164,7 @@ std::tuple<ze::TrajectorySimulator::Ptr, std::vector<ze::TrajectorySimulator::Pt
 
             LOG(INFO) << "Reading trajectory from CSV file: " << csv_path;
             pose_series.load(csv_path);
-            
+            LOG(INFO) << "After load path";
             ze::StampedTransformationVector poses = pose_series.getStampedTransformationVector();
 
             // Set start time of trajectory to zero.
