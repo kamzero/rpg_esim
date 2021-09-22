@@ -405,7 +405,8 @@ cv::Rect OpenGLRenderer::calcBBox(const Transformation& T_W_C,
 	std::vector<cv::Vec4i> hierarchy;
 
 	cv::threshold(img_grayscale, threshold_output, 128, 255, cv::THRESH_BINARY);
-  cv::findContours(threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+  cv::bitwise_not(threshold_output,threshold_output);
+  cv::findContours(threshold_output, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
   // std::cout << "contours size: " << contours.size() << std::endl;
   std::vector<std::vector<cv::Point> > contours_poly(contours.size());
@@ -417,21 +418,31 @@ cv::Rect OpenGLRenderer::calcBBox(const Transformation& T_W_C,
     boundRect[i] = cv::boundingRect(cv::Mat(contours_poly[i]));
   }
 
-	/// draw bounding boxes 
-	for (int i = 0; i< contours.size(); i++)
-	{
-    cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
-		cv::rectangle(img_grayscale, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0);
-    std::cout << boundRect[i].x << " & " << boundRect[i].y <<" & " << boundRect[i].width 
-      << " & " << boundRect[i].height << std::endl;
+  std::vector<cv::Rect>::iterator it;
+  for(it=boundRect.begin();it!=boundRect.end();)
+  {
+      if(it->width <= 5 && it->height <= 5)
+          it=boundRect.erase(it);    //删除元素，返回值指向已删除元素的下一个位置
+      else
+          ++it;    //指向下一个位置
   }
 
-  if(contours.size() > 1)
-    return boundRect[1];
+
+	// /// draw bounding boxes 
+	// for (int i = 0; i< contours.size(); i++)
+	// {
+  //   cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+	// 	cv::rectangle(img_grayscale, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0);
+  //   std::cout << boundRect[i].x << " & " << boundRect[i].y <<" & " << boundRect[i].width 
+  //     << " & " << boundRect[i].height << std::endl;
+  // }
+
+  if(contours.size() > 0)
+    return boundRect[0];
   else
     return cv::Rect(0,0,0,0);
 
-  cv::imwrite("/tmp/2.jpg", img_grayscale);
+  // cv::imwrite("/tmp/2.jpg", img_grayscale);
 }
 
 
